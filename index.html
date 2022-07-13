@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arima&display=swap" rel="stylesheet">
+    <Script src="./bundle.js" defer></Script>
+    <title>Saba</title>
+</head>
+<body>
+    <div class="container">
+
+        <div class="header">
+            <h1>Saba</h1>
+        </div>
+        <form id="playerSelection" class="playerSelection" action="" method="get">
+            <div class="gameType">
+                <button type="button" id="twoPlayers" >2 Players</button>
+                <button type="button" id="ai" >Vs AI</button>
+            </div>
+            <div class="twoPNames">
+                <div class="player1input">
+                    <label for="player1">Player 1 Name:</label>
+                    <input type="text" placeholder="John" id="player1" name="player1">
+                </div>
+                <div class="player2input">
+                    <label for="player2">Player 2 Name:</label>
+                    <input type="text" placeholder="Matt" id="player2" name="player2">
+                </div>
+                <button type="button" id="startGame">Play!</button>  
+            </div>
+            <div class="onePName">
+                <div class="playerinput">
+                    <label for="player">Player Name:</label>
+                    <input type="text" placeholder="John" id="player" name="player">
+                </div>
+                <button type="button" id="startGameAi">Play!</button> 
+            </div>
+        </form>
+        <div class="gameBoard">
+            <div class="player0">
+                <p id="player1name" class="playername"></p>
+                <p id="player1score" class="playerScore">Score: 0</p>
+            </div>
+            <div id="board">
+            </div>
+            <div class="player1">
+                <p id="player2name" class="playername"></p>
+                <p id="player2score" class="playerScore">Score: 0</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h4>Crafted by Haervwe</h4>
+        </div>
+    </div>
+</body>
+</html>
