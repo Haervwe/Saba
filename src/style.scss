@@ -1,0 +1,145 @@
+*{
+    font-family: 'Arima', cursive;
+}
+
+$darkGradientColor: rgb(0, 23, 51);
+$backgroundColor: rgba(213,219,235,1);
+
+
+$player0color: rgb(0,93,223);
+$player0colorHover:rgba(0,130,196);
+
+$player1color: rgb(240,119,22);
+$player1colorHover:rgba(238,127,27);
+
+
+
+body{
+    margin: 0px;
+    padding: 0px;
+    height: 100vh;
+    width: 100vw;
+    color: rgb(0, 0, 0);
+    background-color: $backgroundColor;
+    
+
+}
+
+.container {
+    display: grid;
+    grid-template-rows: minmax(10px,8vh) minmax(200px,84vh) minmax(10px,8vh);
+    .header {
+        background: $darkGradientColor;
+        background: linear-gradient(180deg, $darkGradientColor 0%, $backgroundColor 100%);
+        h1{
+            text-align: center;
+            text-shadow: 2px 2px white;
+         }
+        grid-row: 1;
+    }
+    .playerSelection {
+        justify-items: center;
+        align-content: center;
+        grid-row: 2;
+        p{
+            text-align: center;
+         }
+    }
+    .gameBoard {
+        justify-items: center;
+        align-content: center;
+        .player0{
+            p{
+               text-align: center;
+               color: $player0color;
+               text-shadow: 1px 1px black;
+            }
+        }
+        .player1{
+            p{
+               text-align: center;
+               color: $player1color;
+               text-shadow: 1px 1px black;
+            }
+        }
+
+        p{
+            font-size: 17px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px white;
+         }
+        grid-row: 2;
+    }
+    .footer {
+        background: $darkGradientColor;
+        background: linear-gradient(0deg, $darkGradientColor 0%, $backgroundColor 100%);
+        justify-items: center;
+        align-content: center;
+        grid-row: 3;
+        h4{
+            text-align: center;
+            text-shadow: 1px 1px white;
+         }
+    }
+}
+
+.playerSelection {
+    display: grid;
+    .gameType {
+        display: grid;
+    }
+    .twoPNames{
+        display: none;
+    }
+    .onePName{
+        display: none;
+    }
+}
+
+
+.gameBoard {
+    display: none;
+    justify-items: center;
+    align-content: center;
+    #board {
+        display: grid;
+        gap: 5px;
+        grid-template-columns: repeat(3,minmax(50px,20vh));
+        grid-template-rows: repeat(3,minmax(50px,20vh));
+        .square {
+            border-radius: 15px;
+            border: 2px black solid;
+        }
+        .X{
+            background-color: $player0color;
+        }
+        .O{
+            background-color: $player1color;
+        }
+
+    }
+    .player0{
+        .square:hover {
+            background-color: $player0colorHover;
+        }
+        .O:hover {
+            background-color: $player0color;
+        }
+        .X:hover {
+            background-color: $player1color;
+        }
+    }
+    .player1{
+        .square:hover {
+            background-color: $player1colorHover;
+        }
+        .O:hover {
+            background-color: $player0color;
+        }
+        .X:hover {
+            background-color: $player1color;
+        }
+    }
+}
+
