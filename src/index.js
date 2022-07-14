@@ -1,8 +1,9 @@
+import "./style.scss";
 
 
 const sabaGame = (()=>{
     var board = document.getElementById("board");
-    var game = [[]];
+    var game = [];
     var players = [];
     var currentPlayer = 2;
     var gameType;
@@ -26,17 +27,23 @@ const sabaGame = (()=>{
         function plusScore (n){
             this.score += n;
         }
+        function clearScore () {
+            this.score =0;
+        }
         return {
             name,
             type,
             score,
             mark,
             plusScore,
+            clearScore,
         };
     };
 
     const SquareFactory = (i,j) =>{
         let id = `X${i}Y${j}`;
+        let x = i;
+        let y = j;
         function render(a) {
             let current = document.getElementById(`square${a.id}`);
             if (current == null) {
@@ -50,7 +57,7 @@ const sabaGame = (()=>{
                     
             } else {
                 current.className = `square ${a.mark}`;
-                board.className = `player${currentPlayer}`;
+                board.className = `player${currentPlayer}turn`;
             }
         }
 
@@ -65,12 +72,30 @@ const sabaGame = (()=>{
                     render(this);
                 } else {
                     this.mark = players[currentPlayer].mark;
-                    if ((gameType == "ai") && (checkWinner(game,currentPlayer)== 8)){
+                    render(this);
+                    if (checkWinner(game,currentPlayer,this.x,this.y)>=0){
+                        if (currentPlayer == 0){
+                            players[0].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                            player1score.innerText = `Score: ${players[0].score}`;
+                            currentPlayer = 1;
+                            return;
+                        }
+                        if(currentPlayer == 1){
+                            players[1].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                            player2score.innerText = `Score: ${players[1].score}`;
+                            currentPlayer = 0;
+                            return;
+                        }
+                    }
+                    if ((gameType == "ai") && (checkWinner(game,currentPlayer,this.x,this.y) === false)){
                         currentPlayer = 1;
                         let index = miniMax(game,0,true).index;
                         game[index].mark = "O";
-                        currentPlayer = 0;
+                        players[1].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                        player2score.innerText = `Score: ${players[1].score}`;
                         render(game[index]);
+                        currentPlayer = 0;
+                        return;
                     } else {
                         if (currentPlayer == 0){
                             currentPlayer = 1;
@@ -79,40 +104,38 @@ const sabaGame = (()=>{
                         }
                     }
                     console.log(currentPlayer);
-                    if (checkWinner(game,currentPlayer)==-1){
-                        players[1].plusScore();
-                        player2score.innerText = `Score: ${players[1].score}`;
-                        currentPlayer = 0;
-                        resetGame();
-                        return;
-                    } else if (checkWinner(game,currentPlayer)==1){
-                        players[0].plusScore();
-                        player1score.innerText = `Score: ${players[0].score}`;
-                        currentPlayer = 1;
-                        resetGame();
-                        return;
-                    }else if (checkWinner(game,currentPlayer)==0){
-                       
-                        if (currentPlayer == 0){
-                            currentPlayer = 1;
-                        } else {
-                            currentPlayer = 0;
-                        } 
-                        resetGame();
-                        return;
+                    if(players[0].score >= 100){
+                        showWinner(players[0]);
                     }
-                    render(this);
+                    if(players[1].score >= 100){
+                        showWinner(players[1]);
+                    }
+                    
                 }
             }
         }
         return {
         id,
+        x,
+        y,
         mark,
         setMark,
         };
     };
 
-    function checkWinner(game,currentPlayer,lastMove){
+    function checkWinner(game,currentPlayer,x,y){
+        
+        
+       /* 
+        if(){
+            return "player1"
+        }
+        if(){
+            return "player2"
+        }*/
+        return false;
+
+
 
     }
 
@@ -130,7 +153,7 @@ const sabaGame = (()=>{
     }
 
     function resetGame () {
-        game = [[]];
+        game = [];
         currentPlayer = 2;
         let lastPlayer = currentPlayer;
         board.innerHTML = "";
@@ -140,7 +163,11 @@ const sabaGame = (()=>{
         } else {
             currentPlayer = lastPlayer;
         }
-        board.className = `player${currentPlayer}`;
+        board.className = `player${currentPlayer}turn`;
+    }
+
+    function showWinner (player) {
+        
     }
 
     function setGameType (type){
@@ -167,6 +194,7 @@ const sabaGame = (()=>{
         player2name.innerText = `${players[1].name}`;
     }
 
+    
     //game first initialization
     
     resetGame();
@@ -185,7 +213,7 @@ function displayTwoPlayers () {
     const twoPNames = document.querySelector(".twoPNames");
     gameType.style.display = "none";
     twoPNames.style.display = "grid";
-    BoardFactory.setGameType("two");
+    sabaGame.setGameType("two");
 }
 
 function displayOnePlayer () {
@@ -193,7 +221,7 @@ function displayOnePlayer () {
     const onePName = document.querySelector(".onePName");
     gameType.style.display = "none";
     onePName.style.display = "grid";
-    BoardFactory.setGameType("ai");
+    sabaGame.setGameType("ai");
 }
 
 function displayGame () {
@@ -201,11 +229,11 @@ function displayGame () {
     const gameBoard = document.querySelector(".gameBoard");
     const onePName = document.querySelector(".onePName");
     const twoPNames = document.querySelector(".twoPNames");
-    gameBoard.style.display = "Grid";
+    gameBoard.style.display = "grid";
     onePName.style.display = "none";
     twoPNames.style.display = "none";
     form.style.display = "none";
-    BoardFactory.newPlayers();
+    sabaGame.newPlayers();
 }
 // event listneters
 

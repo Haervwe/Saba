@@ -7,10 +7,10 @@ $backgroundColor: rgba(213,219,235,1);
 
 
 $player0color: rgb(0,93,223);
-$player0colorHover:rgba(0,130,196);
+$player0colorHover:rgb(0,130,196);
 
 $player1color: rgb(240,119,22);
-$player1colorHover:rgba(238,127,27);
+$player1colorHover:rgb(238,127,27);
 
 
 
@@ -46,8 +46,6 @@ body{
          }
     }
     .gameBoard {
-        justify-items: center;
-        align-content: center;
         .player0{
             p{
                text-align: center;
@@ -100,14 +98,17 @@ body{
 
 .gameBoard {
     display: none;
-    justify-items: center;
-    align-content: center;
+    grid-template-columns: minmax(50px,1fr) minmax(500px,9fr) minmax(50px,1fr);
+    grid-template-rows: 1fr;
     #board {
         display: grid;
         gap: 5px;
-        grid-template-columns: repeat(3,minmax(50px,20vh));
-        grid-template-rows: repeat(3,minmax(50px,20vh));
+        height: 100%;
+        grid-template-columns: repeat(12,minmax(10px,1fr));
+        grid-template-rows: repeat(12,minmax(10px,1fr));
         .square {
+            height: 6vh;
+            width: 6vh;
             border-radius: 15px;
             border: 2px black solid;
         }
@@ -119,7 +120,7 @@ body{
         }
 
     }
-    .player0{
+    .player1turn{
         .square:hover {
             background-color: $player0colorHover;
         }
@@ -130,7 +131,7 @@ body{
             background-color: $player1color;
         }
     }
-    .player1{
+    .player0turn{
         .square:hover {
             background-color: $player1colorHover;
         }
@@ -143,3 +144,6 @@ body{
     }
 }
 
+#board {
+    justify-self: center;
+}
