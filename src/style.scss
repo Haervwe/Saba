@@ -113,10 +113,10 @@ body{
             border: 2px black solid;
         }
         .X{
-            background-color: $player0color;
+            background-color: $player1color;
         }
         .O{
-            background-color: $player1color;
+            background-color: $player0color;
         }
 
     }

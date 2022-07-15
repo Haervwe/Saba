@@ -8,7 +8,7 @@ const sabaGame = (()=>{
     var currentPlayer = 2;
     var gameType;
     var mark = "";
-
+    var roundStartPlayer = 1;
 
     const PlayerFactory = (name,type) =>{
         let mark;
@@ -57,43 +57,61 @@ const sabaGame = (()=>{
                     
             } else {
                 current.className = `square ${a.mark}`;
-                board.className = `player${currentPlayer}turn`;
             }
         }
 
-        
+        function resetMark (){
+            this.mark = "";
+            render(this);
+        }
 
         function setMark (){
             let player1score = document.getElementById("player1score");
             let player2score = document.getElementById("player2score");
-
+            console.log("X:",this.x,"Y:",this.y,"ID:",this.id);
             if (this.mark == ""){
                 if  (currentPlayer == 2){
                     render(this);
                 } else {
+                    if(currentPlayer == 1){
+                        board.className = `player1turn`;
+                    }
+                    if(currentPlayer == 0){
+                        board.className = `player0turn`;
+                    }
                     this.mark = players[currentPlayer].mark;
+                    let check = checkWinner(game,this.x,this.y);
                     render(this);
-                    if (checkWinner(game,currentPlayer,this.x,this.y)>=0){
+                    if (check.score>=0){
                         if (currentPlayer == 0){
-                            players[0].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                            players[0].plusScore(check.score)
                             player1score.innerText = `Score: ${players[0].score}`;
                             currentPlayer = 1;
+                            if (check.reset == true){
+                                resetGame();
+                            }
                             return;
                         }
                         if(currentPlayer == 1){
-                            players[1].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                            players[1].plusScore(check.score)
                             player2score.innerText = `Score: ${players[1].score}`;
                             currentPlayer = 0;
+                            if (check.reset == true){
+                                resetGame();
+                            }
                             return;
                         }
                     }
-                    if ((gameType == "ai") && (checkWinner(game,currentPlayer,this.x,this.y) === false)){
+                    if ((gameType == "ai") && (check.reset == false)){
                         currentPlayer = 1;
                         let index = miniMax(game,0,true).index;
                         game[index].mark = "O";
-                        players[1].plusScore(checkWinner(game,currentPlayer,this.x,this.y))
+                        players[1].plusScore(checkWinner(game,this.x,this.y).score)
                         player2score.innerText = `Score: ${players[1].score}`;
                         render(game[index]);
+                        if (check.reset == true){
+                            resetGame();
+                        }
                         currentPlayer = 0;
                         return;
                     } else {
@@ -102,7 +120,9 @@ const sabaGame = (()=>{
                         } else {
                             currentPlayer = 0;
                         }
+                        
                     }
+                    
                     console.log(currentPlayer);
                     if(players[0].score >= 100){
                         showWinner(players[0]);
@@ -119,24 +139,289 @@ const sabaGame = (()=>{
         x,
         y,
         mark,
+        resetMark,
         setMark,
         };
     };
 
-    function checkWinner(game,currentPlayer,x,y){
-        
-        
-       /* 
-        if(){
-            return "player1"
+    function checkWinner(game,x,y){
+
+        let turnScore = 0;
+        let reset = false;
+
+        //checks for 4 in a row
+
+        if(x<9){
+            if((game[x][y].mark == game[x+1][y].mark)&&(game[x+1][y].mark == game[x+2][y].mark)&&(game[x+2][y].mark == game[x+3][y].mark)){
+                turnScore +=3;
+            }
         }
-        if(){
-            return "player2"
-        }*/
-        return false;
+        if(x>2){
+            if((game[x][y].mark == game[x-1][y].mark)&&(game[x-1][y].mark == game[x-2][y].mark)&&(game[x-2][y].mark == game[x-3][y].mark)){
+                turnScore +=3;
+            }
+        }
+        if(y<9){
+            if((game[x][y].mark == game[x][y+1].mark)&&(game[x][y+1].mark == game[x][y+2].mark)&&(game[x][y+2].mark == game[x][y+3].mark)){
+                turnScore +=3;
+            }
+        }
+        if(y>2){
+            if((game[x][y].mark == game[x][y-1].mark)&&(game[x][y-1].mark == game[x][y-2].mark)&&(game[x][y-2].mark == game[x][y-3].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x<9)&&(y<9)){
+            if((game[x][y].mark == game[x+1][y+1].mark)&&(game[x+1][y+1].mark == game[x+2][y+2].mark)&&(game[x+2][y+2].mark == game[x+3][y+3].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x>2)&&(y>2)){
+            if((game[x][y].mark == game[x-1][y-1].mark)&&(game[x-1][y-1].mark == game[x-2][y-2].mark)&&(game[x-2][y-2].mark == game[x-3][y-3].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x>2)&&(y<9)){
+            if((game[x][y].mark == game[x-1][y+1].mark)&&(game[x-1][y+1].mark == game[x-2][y+2].mark)&&(game[x-2][y+2].mark == game[x-3][y+3].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x<9)&&(y>2)){
+            if((game[x][y].mark == game[x+1][y-1].mark)&&(game[x+1][y-1].mark == game[x+2][y-2].mark)&&(game[x+2][y-2].mark == game[x+3][y-3].mark)){
+                turnScore +=3;
+            }
+        }
 
+        if((x<10)&&(x>0)){
+            if((game[x][y].mark == game[x-1][y].mark)&&(game[x][y].mark == game[x+1][y].mark)&&(game[x+1][y].mark == game[x+2][y].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x>1)&&(x<11)){
+            if((game[x][y].mark == game[x+1][y].mark)&&(game[x][y].mark == game[x-1][y].mark)&&(game[x-1][y].mark == game[x-2][y].mark)){
+                turnScore +=3;
+            }
+        }
+        if((y<10)&&(y>0)){
+            if((game[x][y].mark == game[x][y-1].mark)&&(game[x][y].mark == game[x][y+1].mark)&&(game[x][y+1].mark == game[x][y+2].mark)){
+                turnScore +=3;
+            }
+        }
+        if((y>1)&&(y<11)){
+            if((game[x][y].mark == game[x][y+1].mark)&&(game[x][y].mark == game[x][y-1].mark)&&(game[x][y-1].mark == game[x][y-2].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x<10)&&(y<10)&&(x>0)&&(y>0)){
+            if((game[x][y].mark == game[x-1][y-1].mark)&&(game[x][y].mark == game[x+1][y+1].mark)&&(game[x+1][y+1].mark == game[x+2][y+2].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x>1)&&(y>1)&&(x<11)&&(y<11)){
+            if((game[x][y].mark == game[x+1][y+1].mark)&&(game[x][y].mark == game[x-1][y-1].mark)&&(game[x-1][y-1].mark == game[x-2][y-2].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x>1)&&(y<10)&&(x<11)&&(y>0)){
+            if((game[x][y].mark == game[x+1][y-1].mark)&&(game[x][y].mark == game[x-1][y+1].mark)&&(game[x-1][y+1].mark == game[x-2][y+2].mark)){
+                turnScore +=3;
+            }
+        }
+        if((x<10)&&(y>1)&&(x>0)&&(y<11)){
+            if((game[x][y].mark == game[x-1][y+1].mark)&&(game[x][y].mark == game[x+1][y-1].mark)&&(game[x+1][y-1].mark == game[x+2][y-2].mark)){
+                turnScore +=3;
+            }
+        }
 
+        //checks for an eats 2 move and erase eaten marks.
 
+        if(x<9){
+            if(((game[x][y].mark != game[x+1][y].mark)&&(game[x+1][y].mark != ""))&&((game[x+1][y].mark == game[x+2][y].mark))&&((game[x][y].mark == game[x+3][y].mark))){
+                turnScore +=2;
+                game[x+1][y].resetMark();
+                game[x+2][y].resetMark();
+            }
+        }
+        if(x>2){
+            if(((game[x][y].mark != game[x-1][y].mark)&&(game[x-1][y].mark != ""))&&((game[x-1][y].mark == game[x-2][y].mark))&&((game[x][y].mark == game[x-3][y].mark))){
+                turnScore +=2;
+                game[x-1][y].resetMark();
+                game[x-2][y].resetMark();
+            }
+        }
+        if(y<9){
+            if(((game[x][y].mark != game[x][y+1].mark)&&(game[x][y+1].mark != ""))&&((game[x][y+1].mark == game[x][y+2].mark))&&((game[x][y].mark == game[x][y+3].mark))){
+                turnScore +=2;
+                game[x][y+1].resetMark();
+                game[x][y+2].resetMark();
+            }
+        }
+        if(y>2){
+            if(((game[x][y].mark != game[x][y-1].mark)&&(game[x][y-1].mark != ""))&&((game[x][y-1].mark == game[x][y-2].mark))&&((game[x][y].mark == game[x][y-3].mark))){
+                turnScore +=2;
+                game[x][y-1].resetMark();
+                game[x][y-2].resetMark();
+            }
+        }
+        if((x<9)&&(y<9)){
+            if(((game[x][y].mark != game[x+1][y+1].mark)&&(game[x+1][y+1].mark != ""))&&((game[x+1][y+1].mark == game[x+2][y+2].mark))&&((game[x][y].mark == game[x+3][y+3].mark))){
+                turnScore +=2;
+                game[x+1][y+1].resetMark();
+                game[x+2][y+2].resetMark();
+            }
+        }
+        if((x>2)&&(y>2)){
+            if(((game[x][y].mark != game[x-1][y-1].mark)&&(game[x-1][y-1].mark != ""))&&((game[x-1][y-1].mark == game[x-2][y-2].mark))&&((game[x][y].mark == game[x-3][y-3].mark))){
+                turnScore +=2;
+                game[x-1][y-1].resetMark();
+                game[x-2][y-2].resetMark();
+            }
+        }
+        if((x>2)&&(y<9)){
+            if(((game[x][y].mark != game[x-1][y+1].mark)&&(game[x-1][y+1].mark != ""))&&((game[x-1][y+1].mark == game[x-2][y+2].mark))&&((game[x][y].mark == game[x-3][y+3].mark))){
+                turnScore +=2;
+                game[x-1][y+1].resetMark();
+                game[x-2][y+2].resetMark();
+            }
+        }
+        if((x<9)&&(y>2)){
+            if(((game[x][y].mark != game[x+1][y-1].mark)&&(game[x+1][y-1].mark != ""))&&((game[x+1][y-1].mark == game[x+2][y-2].mark))&&((game[x][y].mark == game[x+3][y-3].mark))){
+                turnScore +=2;
+                game[x+1][y-1].resetMark();
+                game[x+2][y-2].resetMark();
+            }
+        }
+
+        //checks for 5 in a row wich resets the board
+
+        if(x<8){
+            if((game[x][y].mark == game[x+1][y].mark)&&(game[x+1][y].mark == game[x+2][y].mark)&&(game[x+2][y].mark == game[x+3][y].mark)&&(game[x+3][y].mark == game[x+4][y].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if(x>3){
+            if((game[x][y].mark == game[x-1][y].mark)&&(game[x-1][y].mark == game[x-2][y].mark)&&(game[x-2][y].mark == game[x-3][y].mark)&&(game[x-3][y].mark == game[x-4][y].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if(y<8){
+            if((game[x][y].mark == game[x][y+1].mark)&&(game[x][y+1].mark == game[x][y+2].mark)&&(game[x][y+2].mark == game[x][y+3].mark)&&(game[x][y+3].mark == game[x][y+4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if(y>3){
+            if((game[x][y].mark == game[x][y-1].mark)&&(game[x][y-1].mark == game[x][y-2].mark)&&(game[x][y-2].mark == game[x][y-3].mark)&&(game[x][y-3].mark == game[x][y-4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x<8)&&(y<8)){
+            if((game[x][y].mark == game[x+1][y+1].mark)&&(game[x+1][y+1].mark == game[x+2][y+2].mark)&&(game[x+2][y+2].mark == game[x+3][y+3].mark)&&(game[x+3][y+3].mark == game[x+4][y+4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x>3)&&(y>3)){
+            if((game[x][y].mark == game[x-1][y-1].mark)&&(game[x-1][y-1].mark == game[x-2][y-2].mark)&&(game[x-2][y-2].mark == game[x-3][y-3].mark)&&(game[x-3][y-3].mark == game[x-4][y-4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x>3)&&(y<8)){
+            if((game[x][y].mark == game[x-1][y+1].mark)&&(game[x-1][y+1].mark == game[x-2][y+2].mark)&&(game[x-2][y+2].mark == game[x-3][y+3].mark)&&(game[x-3][y+3].mark == game[x-4][y+4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x<8)&&(y>3)){
+            if((game[x][y].mark == game[x+1][y-1].mark)&&(game[x+1][y-1].mark == game[x+2][y-2].mark)&&(game[x+2][y-2].mark == game[x+3][y-3].mark)&&(game[x+3][y-3].mark == game[x+4][y-4].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+
+        // //
+        if((x<9)&&(x>0)){
+            if((game[x][y].mark == game[x-1][y].mark)&&(game[x][y].mark == game[x+1][y].mark)&&(game[x+1][y].mark == game[x+2][y].mark)&&(game[x+2][y].mark == game[x+3][y].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((x>2)&&(x<11)){
+            if((game[x][y].mark == game[x+1][y].mark)&&(game[x][y].mark == game[x-1][y].mark)&&(game[x-1][y].mark == game[x-2][y].mark)&&(game[x-2][y].mark == game[x-3][y].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((y<9)&&(y>0)){
+            if((game[x][y].mark == game[x][y-1].mark)&&(game[x][y].mark == game[x][y+1].mark)&&(game[x][y+1].mark == game[x][y+2].mark)&&(game[x][y+2].mark == game[x][y+3].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((y>2)&&(y<11)){
+            if((game[x][y].mark == game[x][y+1].mark)&&(game[x][y].mark == game[x][y-1].mark)&&(game[x][y-1].mark == game[x][y-2].mark)&&(game[x][y-2].mark == game[x][y-3].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((x<9)&&(y<9)&&(x>0)&&(y>0)){
+            if((game[x][y].mark == game[x-1][y-1].mark)&&(game[x][y].mark == game[x+1][y+1].mark)&&(game[x+1][y+1].mark == game[x+2][y+2].mark)&&(game[x+2][y+2].mark == game[x+3][y+3].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x>2)&&(y>2)&&(x<11)&&(y<11)){
+            if((game[x][y].mark == game[x+1][y+1].mark)&&(game[x][y].mark == game[x-1][y-1].mark)&&(game[x-1][y-1].mark == game[x-2][y-2].mark)&&(game[x-2][y-2].mark == game[x-3][y-3].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x>2)&&(y<9)&&(x<11)&&(y>0)){
+            if((game[x][y].mark == game[x+1][y-1].mark)&&(game[x][y].mark == game[x-1][y+1].mark)&&(game[x-1][y+1].mark == game[x-2][y+2].mark)&&(game[x-2][y+2].mark == game[x-3][y+3].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        if((x<9)&&(y>2)&&(x>0)&&(y<11)){
+            if((game[x][y].mark == game[x-1][y+1].mark)&&(game[x][y].mark == game[x+1][y-1].mark)&&(game[x+1][y-1].mark == game[x+2][y-2].mark)&&(game[x+2][y-2].mark == game[x+3][y-3].mark)){
+                turnScore +=2;
+                reset = true;
+            }
+        }
+        // //
+        if((x>1)&&(x<10)){
+            if((game[x][y].mark == game[x+1][y].mark)&&(game[x][y].mark == game[x+2][y].mark)&&(game[x][y].mark == game[x-1][y].mark)&&(game[x][y].mark == game[x-2][y].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((y>1)&&(y<10)){
+            if((game[x][y].mark == game[x][y-1].mark)&&(game[x][y].mark == game[x][y-2].mark)&&(game[x][y].mark == game[x][y+1].mark)&&(game[x][y].mark == game[x][y+2].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((x>1)&&(y<10)&&(x<10)&&(y>1)){
+            if((game[x][y].mark == game[x+1][y-1].mark)&&(game[x][y].mark == game[x+2][y-2].mark)&&(game[x][y].mark == game[x-1][y+1].mark)&&(game[x][y].mark == game[x-2][y+2].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        if((x>1)&&(y<10)&&(x<10)&&(y>1)){
+            if((game[x][y].mark == game[x+1][y+1].mark)&&(game[x][y].mark == game[x+2][y+2].mark)&&(game[x][y].mark == game[x-1][y-1].mark)&&(game[x][y].mark == game[x-2][y-2].mark)){
+                turnScore -=1;
+                reset = true;
+            }
+        }
+        console.log(reset,turnScore);
+        return {
+            reset,
+            score: turnScore,
+        };
     }
 
     function populateBoard (){
@@ -155,15 +440,21 @@ const sabaGame = (()=>{
     function resetGame () {
         game = [];
         currentPlayer = 2;
-        let lastPlayer = currentPlayer;
+        if(roundStartPlayer == 0){
+            roundStartPlayer = 1;
+        }
+        if(roundStartPlayer == 1){
+            roundStartPlayer = 0;
+        }
         board.innerHTML = "";
         populateBoard ();
-        if (lastPlayer == 2){
-            currentPlayer = 0;
-        } else {
-            currentPlayer = lastPlayer;
+        currentPlayer = roundStartPlayer;
+        if(currentPlayer == 1){
+            board.className = `player0turn`;
         }
-        board.className = `player${currentPlayer}turn`;
+        if(currentPlayer == 0){
+            board.className = `player1turn`;
+        }
     }
 
     function showWinner (player) {
