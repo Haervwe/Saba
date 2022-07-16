@@ -73,7 +73,6 @@ const sabaGame = (()=>{
         function setMark (){
             let player1score = document.getElementById("player1score");
             let player2score = document.getElementById("player2score");
-            console.log(currentPlayer);
             if (this.mark == ""){
                 if  (currentPlayer == 2){
                     render(this);
@@ -87,6 +86,8 @@ const sabaGame = (()=>{
                     this.mark = players[currentPlayer].mark;
                     let check = checkWinner(game,this.x,this.y,false);
                     render(this);
+                    let nextmoves = (nextPossiblemoves(game,[],[]))
+                    console.log(nextmoves);
                     if (currentPlayer == 0){
                         players[0].plusScore(check.score)
                         player1score.innerText = `Score: ${players[0].score}`;
@@ -95,13 +96,13 @@ const sabaGame = (()=>{
                             resetGame();
                         }
                         if ((gameType == "ai") && (check.reset == false)){
-                            console.log("ai");
                             let index = miniMax(game,0,true,this.x,this.y);
                             game[index.x][index.y].mark = players[1].mark;
-                            players[1].plusScore(checkWinner(game,this.x,this.y,false).score);
+                            let internalCheck = checkWinner(game,index.x,index.y,false);
+                            players[1].plusScore(internalCheck.score);
                             player2score.innerText = `Score: ${players[1].score}`;
                             render(game[index.x][index.y]);
-                            board.className = `player0turn`;
+                            board.className = `player1turn`;
                             if (check.reset == true){
                                 resetGame();
                                 return;
@@ -141,58 +142,101 @@ const sabaGame = (()=>{
         };
     };
 
+    function nextPossiblemoves(gameCopy,checked,moves){
+        let nextX = 0;
+        let nextY = 0;
+        let toCheck = true;
+        let result;
+        for(let m= 0; m<12; m++){
+            for(let l= 0; l<12; l++){
+                if(gameCopy[m][l].mark != ""){
+                    checked.push({x: m , y: l});
+                    for (let i = -1; i < 2 ; i++){
+                        for (let j = -1; j < 2; j++){
+                            nextX = m+i;
+                            nextY = l+j;
+                            for(let k = 0;k < checked.length;k++){
+                                if ((checked[k].x == nextX)&&(checked[k].y == nextY)){
+                                    toCheck = false;
+                                    break;
+                                } 
+                            }
+                            if (toCheck == true){
+                                if((nextX >= 0)&&(nextX <= 11)&&(nextY >= 0)&&(nextY <= 11)){
+                                    if(gameCopy[nextX][nextY].mark == ""){
+                                        moves.push({x: nextX, y: nextY});
+                                        checked.push({x: nextX, y: nextY});
+                                    } else {
+                                        checked.push({x: nextX, y: nextY});
+                                        result = nextPossiblemoves(gameCopy,checked,moves);
+                                        checked = result.checked;
+                                        moves = result.moves;
+                                    }
+                                }
+                            }
+                            toCheck = true;  
+                        }
+                    }
+                }
+            }
+        }
+        return {moves,checked};
+    }
+
     //miniMax algorithm function for ai play
 
     function miniMax (gameTemp ,depth, isMaximizer,x,y){
 
         var gameCopy = _.cloneDeep(gameTemp);
         let moves = [];
-    //next possible moves evaluator for AI player
+        let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
         let check = checkWinner(gameCopy,x,y,true);
-        if (check.reset == true||depth==3){
+        if (check.reset == true||depth==1){
+            if(isMaximizer==false){
+                return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
+            }
             if(isMaximizer==true){
                 return {scoreAi: 0, scoreHuman: check.score, x: x, y: y};
             }
-            if(isMaximizer==true){
-                return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
-            }
         }
+    //next possible moves evaluator for AI player
         if (isMaximizer == true){
-            for (let i = 0; i < 12; i++){
-                for(let j = 0; j < 12; j++){
-                    if (gameCopy[i][j].mark == ""){
-                        gameCopy[i][j].mark = "O";
-                        let move = miniMax(gameCopy, depth +1, false,i,j);
-                        gameCopy[i].mark = "";
-                        moves.push({scoreAi: check.score + move.scoreAi, scoreHuman: move.scoreHuman, x: i, y: j});
-                    }
+            for (let i = 0; i < nextmoves.length; i++){
+                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "O";
+                    let checkInternal = checkWinner(gameCopy,nextmoves[i].x,nextmoves[i].y,true);
+                    let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y);
+                    gameCopy = _.cloneDeep(gameTemp);
+                    console.log({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    moves.push({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
                 }
             }
         }
+
         
     //next possible moves evaluator for human player
         if(isMaximizer == false){
-            for (let i = 0; i < 12; i++){
-                for(let j = 0; j < 12; j++){
-                    if (gameCopy[i][j].mark == ""){
-                        gameCopy[i][j].mark = "X";
-                        let move = miniMax(gameCopy, depth +1, true,i,j);
-                        gameCopy[i].mark = "";
-                        moves.push({scoreAi: move.scoreAi, scoreHuman:  check.score + move.scoreHuman, x: i, y: j});
-                    }
+            for (let i = 0; i < nextmoves.length; i++){
+                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "X";
+                    let checkInternal = checkWinner(gameCopy,nextmoves[i].x,nextmoves[i].y,true);
+                    let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y);
+                    gameCopy = _.cloneDeep(gameTemp);
+                    console.log({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    moves.push({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
                 }
             }
-        }
-            //best posible value comparison  and return the optimal value. it returns an object with the index and value of the best posible move, 
-            //the index is only relevant in depth 0 as it is the final return value of the function in every other iteration the value used for calculations is only the branch terminal score.
+        }  
+    //best posible value comparison  and return the optimal value. it returns an object with the index and value of the best posible move, 
+    //the index is only relevant in depth 0 as it is the final return value of the function in every other iteration the value used for calculations is only the branch terminal score.
             
         if (isMaximizer == true){
             let x = 0;
             let y = 0;
-            let valueAi = 0;
-            let valueHuman = 0;
+            let valueAi = -Infinity;
+            let valueHuman = Infinity;
             for (let i = 0 ; i < moves.length; i++){
-                if  ((moves[i].scoreAi>moves[i].scoreHuman)&&(moves[i].scoreAi >= valueAi)&&(moves[i].scoreHuman <= valueHuman)){
+                if  ((moves[i].scoreAi >= valueAi)&&(moves[i].scoreHuman <= valueHuman)){
                     x = moves[i].x;
                     y = moves[i].y;
                     valueAi = moves[i].scoreAi;
@@ -208,10 +252,10 @@ const sabaGame = (()=>{
         if (isMaximizer == false){
             let x = 0;
             let y = 0;
-            let valueAi = 0;
-            let valueHuman = 0;
+            let valueAi = Infinity;
+            let valueHuman = -Infinity;
             for (let i = 0 ; i < moves.length; i++){
-                if  ((moves[i].scoreAi<moves[i].scoreHuman)&&(moves[i].scoreAi <= valueAi)&&(moves[i].scoreHuman >= valueHuman)){
+                if  ((moves[i].scoreHuman >= valueHuman)&&(moves[i].scoreAi <= valueAi)){
                     x = moves[i].x;
                     y = moves[i].y;
                     valueAi = moves[i].scoreAi;
