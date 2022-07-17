@@ -96,7 +96,7 @@ const sabaGame = (()=>{
                             resetGame();
                         }
                         if ((gameType == "ai") && (check.reset == false)){
-                            let index = miniMax(game,0,true,this.x,this.y);
+                            let index = miniMax(game,0,true,this.x,this.y,-Infinity,Infinity);
                             game[index.x][index.y].mark = players[1].mark;
                             let internalCheck = checkWinner(game,index.x,index.y,false);
                             players[1].plusScore(internalCheck.score);
@@ -185,13 +185,17 @@ const sabaGame = (()=>{
 
     //miniMax algorithm function for ai play
 
-    function miniMax (gameTemp ,depth, isMaximizer,x,y){
+    function miniMax (gameTemp ,depth, isMaximizer,x,y,alfa,beta){
 
         var gameCopy = _.cloneDeep(gameTemp);
         let moves = [];
         let check = checkWinner(gameCopy,x,y,true);
         let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
-        if (check.reset == true||depth==4){
+        let valueAi = -Infinity;
+        let valueHuman = Infinity;
+        let bestX;
+        let bestY;
+        if (check.reset == true||depth==3){
             if(isMaximizer==false){
                 return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
             }
@@ -204,16 +208,26 @@ const sabaGame = (()=>{
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "X";
-                    let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y);
+                    let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     gameCopy = _.cloneDeep(gameTemp);
                     if (depth == 0){
-                        moves.push({scoreAi: move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
-                    }else {
-                        moves.push({scoreAi: move.scoreAi, scoreHuman: check.score + move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                        console.log(move);
                     }
-
+                    if  ((move.scoreAi >= valueAi)&&(move.scoreHuman <= valueHuman)){
+                        bestX = nextmoves[i].x;
+                        bestY = nextmoves[i].y
+                        valueAi = move.scoreAi;
+                        valueHuman = move.scoreHuman;
+                    }
                 }
             }
+            if (depth == 0){
+                console.log({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY});
+                return({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY });
+            }else {
+                return ({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY});
+            }
+            
         }
 
         
@@ -222,49 +236,18 @@ const sabaGame = (()=>{
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "O";
-                    let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y);
+                    let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     gameCopy = _.cloneDeep(gameTemp);
-                    moves.push({scoreAi: check.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    if  ((-move.scoreHuman <= valueHuman)&&(-move.scoreAi >= valueAi)){
+                        bestX = nextmoves[i].x;
+                        bestY = nextmoves[i].y
+                        valueAi = -move.scoreAi;
+                        valueHuman = -move.scoreHuman;
+                    }
                 }
             }
+            return {scoreAi: -valueAi, scoreHuman: -valueHuman, x: bestX, y: bestY};
         }  
-    //best posible value comparison  and return the optimal value. it returns an object with the index and value of the best posible move, 
-    //the index is only relevant in depth 0 as it is the final return value of the function in every other iteration the value used for calculations is only the branch terminal score.
-            
-        if (isMaximizer == true){
-            let x = 0;
-            let y = 0;
-            let valueAi = -Infinity;
-            let valueHuman = Infinity;
-            for (let i = 0 ; i < moves.length; i++){
-                if  ((moves[i].scoreAi >= valueAi)&&(moves[i].scoreHuman <= valueHuman)){
-                    x = moves[i].x;
-                    y = moves[i].y;
-                    valueAi = moves[i].scoreAi;
-                    valueHuman = moves[i].scoreHuman;
-                }
-            }
-            if (depth == 0){
-                console.log({scoreAi: valueAi, scoreHuman: valueHuman, x: x, y: y});
-                console.log(moves);
-            }
-            return {scoreAi: valueAi, scoreHuman: valueHuman, x: x, y: y};
-        }
-        if (isMaximizer == false){
-            let x = 0;
-            let y = 0;
-            let valueAi = Infinity;
-            let valueHuman = -Infinity;
-            for (let i = 0 ; i < moves.length; i++){
-                if  ((moves[i].scoreHuman >= valueHuman)&&(moves[i].scoreAi <= valueAi)){
-                    x = moves[i].x;
-                    y = moves[i].y;
-                    valueAi = moves[i].scoreAi;
-                    valueHuman = moves[i].scoreHuman;
-                }
-            }
-            return {scoreAi: valueAi, scoreHuman: valueHuman, x: x, y: y};
-        }
     }
 
     function checkWinner(game,x,y,internal){
