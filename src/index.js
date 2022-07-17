@@ -189,9 +189,9 @@ const sabaGame = (()=>{
 
         var gameCopy = _.cloneDeep(gameTemp);
         let moves = [];
-        let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
         let check = checkWinner(gameCopy,x,y,true);
-        if (check.reset == true||depth==1){
+        let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
+        if (check.reset == true||depth==4){
             if(isMaximizer==false){
                 return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
             }
@@ -203,12 +203,15 @@ const sabaGame = (()=>{
         if (isMaximizer == true){
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
-                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "O";
-                    let checkInternal = checkWinner(gameCopy,nextmoves[i].x,nextmoves[i].y,true);
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "X";
                     let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y);
                     gameCopy = _.cloneDeep(gameTemp);
-                    console.log({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
-                    moves.push({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    if (depth == 0){
+                        moves.push({scoreAi: move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    }else {
+                        moves.push({scoreAi: move.scoreAi, scoreHuman: check.score + move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    }
+
                 }
             }
         }
@@ -218,12 +221,10 @@ const sabaGame = (()=>{
         if(isMaximizer == false){
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
-                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "X";
-                    let checkInternal = checkWinner(gameCopy,nextmoves[i].x,nextmoves[i].y,true);
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "O";
                     let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y);
                     gameCopy = _.cloneDeep(gameTemp);
-                    console.log({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
-                    moves.push({scoreAi: checkInternal.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
+                    moves.push({scoreAi: check.score + move.scoreAi, scoreHuman: move.scoreHuman, x: nextmoves[i].x, y: nextmoves[i].y});
                 }
             }
         }  
