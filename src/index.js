@@ -99,6 +99,12 @@ const sabaGame = (()=>{
                         currentPlayer = 1;
                         if (check.reset == true){
                             resetGame();
+                            if ((currentPlayer == 1)&&(gameType= "ai")){
+                                game[6][6].mark = players[1].mark;
+                                render(game[6][6]);
+                                currentPlayer = 0;
+                                board.className = `player1turn`;
+                            }
                         }
                         if ((gameType == "ai") && (check.reset == false)){
                             let index = miniMax(game,0,true,this.x,this.y,-Infinity,Infinity);
@@ -108,8 +114,12 @@ const sabaGame = (()=>{
                             player2score.innerText = `Score: ${players[1].score}`;
                             render(game[index.x][index.y]);
                             board.className = `player1turn`;
-                            if (internalCheck == true){
+                            if (internalCheck.reset == true){
                                 resetGame();
+                                if (currentPlayer == 1){
+                                    game[6][6].mark = players[1].mark;
+                                    render(game[6][6]);
+                                }
                                 return;
                             }
                             currentPlayer = 0;
@@ -123,6 +133,7 @@ const sabaGame = (()=>{
                         currentPlayer = 0;
                         if (check.reset == true){
                             resetGame();
+                            
                         }
                         return;
                     }
@@ -199,7 +210,7 @@ const sabaGame = (()=>{
         let valueHuman;
         let bestX;
         let bestY;
-        if (check.reset == true||depth==5){
+        if (check.reset == true||depth==2){
             if(isMaximizer==false){
                 return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
             }
@@ -220,7 +231,7 @@ const sabaGame = (()=>{
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 2;
                     let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     //gameCopy = _.cloneDeep(gameTemp);
-                    gameCopy = JSON.parse(JSON.stringify(gameTemp));
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 0;
                     if  ((move.scoreAi >= valueAi)&&(move.scoreHuman <= valueHuman)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
@@ -258,7 +269,7 @@ const sabaGame = (()=>{
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == 0){
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 1;
                     let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta);
-                    gameCopy = JSON.parse(JSON.stringify(gameTemp));
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 0;
                     if  ((move.scoreHuman >= valueHuman)&&(move.scoreAi <= valueAi)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
@@ -612,14 +623,15 @@ const sabaGame = (()=>{
         currentPlayer = 2;
         if(roundStartPlayer == 0){
             roundStartPlayer = 1;
-        }
+        } else
         if(roundStartPlayer == 1){
             roundStartPlayer = 0;
-        }
+        } else
         if(roundStartPlayer == 2){
             roundStartPlayer = 0;
         }
         board.innerHTML = "";
+        console.log(roundStartPlayer);
         populateBoard ();
         currentPlayer = roundStartPlayer;
         if(currentPlayer == 1){
@@ -662,7 +674,6 @@ const sabaGame = (()=>{
     //game first initialization
     
     resetGame();
-
     return {
         setGameType,
         newPlayers,
