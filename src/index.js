@@ -1,5 +1,5 @@
 import "./style.scss";
-import _ from "lodash";
+//import _ from "lodash";
 
 const sabaGame = (()=>{
     var board = document.getElementById("board");
@@ -17,9 +17,9 @@ const sabaGame = (()=>{
             return;
         }
         if (players.length == 0 ){
-            mark = "O";
+            mark = 1;
         } else {
-            mark = "X";
+            mark = 2;
         }
         if (name == ""){
             name = `Player ${players.length+1}`;
@@ -51,23 +51,28 @@ const sabaGame = (()=>{
                 square.id = `square${id}`;
                 square.className = "square";
                 square.innerText = "";
-                a.mark = "";
+                a.mark = 0;
                 square.onclick = function (){a.setMark();};
                 board.appendChild(square);
                     
             } else {
-                current.className = `square ${a.mark}`;
+                if(a.mark == 1){
+                    current.className = `square O`;
+                }
+                if(a.mark == 2){
+                    current.className = `square X`;
+                }
+                if(a.mark == 0){
+                    current.className = `square`;
+                }
+                
+                
             }
         }
 
-        function resetMark (copy){
-            if (copy == false){
-                this.mark = "";
-                render(this);
-            }
-            if (copy == true){
-                this.mark = "";
-            }
+        function resetMark (){
+            this.mark = 0;
+            render(this);
         }
 
         function setMark (){
@@ -103,7 +108,7 @@ const sabaGame = (()=>{
                             player2score.innerText = `Score: ${players[1].score}`;
                             render(game[index.x][index.y]);
                             board.className = `player1turn`;
-                            if (check.reset == true){
+                            if (internalCheck == true){
                                 resetGame();
                                 return;
                             }
@@ -149,7 +154,7 @@ const sabaGame = (()=>{
         let result;
         for(let m= 0; m<12; m++){
             for(let l= 0; l<12; l++){
-                if(gameCopy[m][l].mark != ""){
+                if(gameCopy[m][l].mark != 0){
                     checked.push({x: m , y: l});
                     for (let i = -1; i < 2 ; i++){
                         for (let j = -1; j < 2; j++){
@@ -163,7 +168,7 @@ const sabaGame = (()=>{
                             }
                             if (toCheck == true){
                                 if((nextX >= 0)&&(nextX <= 11)&&(nextY >= 0)&&(nextY <= 11)){
-                                    if(gameCopy[nextX][nextY].mark == ""){
+                                    if(gameCopy[nextX][nextY].mark == 0){
                                         moves.push({x: nextX, y: nextY});
                                         checked.push({x: nextX, y: nextY});
                                     } else {
@@ -184,18 +189,17 @@ const sabaGame = (()=>{
     }
 
     //miniMax algorithm function for ai play
-
-    function miniMax (gameTemp ,depth, isMaximizer,x,y,alfa,beta){
-
-        var gameCopy = _.cloneDeep(gameTemp);
-        let moves = [];
+    
+    function miniMax (gameTemp,depth,isMaximizer,x,y,alfa,beta){
+        //var gameCopy = _.cloneDeep(gameTemp);
+        var gameCopy = JSON.parse(JSON.stringify(gameTemp));
         let check = checkWinner(gameCopy,x,y,true);
         let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
-        let valueAi = -Infinity;
-        let valueHuman = Infinity;
+        let valueAi;
+        let valueHuman;
         let bestX;
         let bestY;
-        if (check.reset == true||depth==3){
+        if (check.reset == true||depth==5){
             if(isMaximizer==false){
                 return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
             }
@@ -204,25 +208,35 @@ const sabaGame = (()=>{
             }
         }
     //next possible moves evaluator for AI player
+
         if (isMaximizer == true){
+            if (depth != 0){
+                beta += check.score;
+            }
+            valueAi = -Infinity;
+            valueHuman = Infinity;
             for (let i = 0; i < nextmoves.length; i++){
-                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
-                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "X";
+                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == 0){
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 2;
                     let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
-                    gameCopy = _.cloneDeep(gameTemp);
-                    if (depth == 0){
-                        console.log(move);
-                    }
+                    //gameCopy = _.cloneDeep(gameTemp);
+                    gameCopy = JSON.parse(JSON.stringify(gameTemp));
                     if  ((move.scoreAi >= valueAi)&&(move.scoreHuman <= valueHuman)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
                         valueAi = move.scoreAi;
                         valueHuman = move.scoreHuman;
-                    }
+                        alfa = move.scoreAi
+                        if (depth == 0){
+                            console.log({scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY})
+                        }
+                        if(alfa>beta){
+                            break;
+                        }
+                    }   
                 }
             }
             if (depth == 0){
-                console.log({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY});
                 return({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY });
             }else {
                 return ({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY});
@@ -232,21 +246,32 @@ const sabaGame = (()=>{
 
         
     //next possible moves evaluator for human player
+
         if(isMaximizer == false){
+            alfa += check.score;
+            if (depth == 1){
+                beta = 0;
+            }
+            valueAi = Infinity;
+            valueHuman = -Infinity;
             for (let i = 0; i < nextmoves.length; i++){
-                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == ""){
-                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = "O";
+                if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == 0){
+                    gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 1;
                     let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta);
-                    gameCopy = _.cloneDeep(gameTemp);
-                    if  ((-move.scoreHuman <= valueHuman)&&(-move.scoreAi >= valueAi)){
+                    gameCopy = JSON.parse(JSON.stringify(gameTemp));
+                    if  ((move.scoreHuman >= valueHuman)&&(move.scoreAi <= valueAi)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
-                        valueAi = -move.scoreAi;
-                        valueHuman = -move.scoreHuman;
-                    }
+                        valueAi = move.scoreAi;
+                        valueHuman = move.scoreHuman;
+                        beta = move.scoreHuman;
+                        if (beta>alfa){
+                            break;
+                        }
+                    } 
                 }
             }
-            return {scoreAi: -valueAi, scoreHuman: -valueHuman, x: bestX, y: bestY};
+            return {scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY};
         }  
     }
 
@@ -342,59 +367,100 @@ const sabaGame = (()=>{
         //checks for an eats 2 move and erase eaten marks.
 
         if(x<9){
-            if(((game[x][y].mark != game[x+1][y].mark)&&(game[x+1][y].mark != ""))&&((game[x+1][y].mark == game[x+2][y].mark))&&((game[x][y].mark == game[x+3][y].mark))){
+            if(((game[x][y].mark != game[x+1][y].mark)&&(game[x+1][y].mark != 0))&&((game[x+1][y].mark == game[x+2][y].mark))&&((game[x][y].mark == game[x+3][y].mark))){
                 turnScore +=2;
-                game[x+1][y].resetMark(internal);
-                game[x+2][y].resetMark(internal);
+                if (internal == true){
+                    game[x+1][y].mark = 0;
+                    game[x+2][y].mark = 0; 
+                } else {
+                    game[x+1][y].resetMark();
+                    game[x+2][y].resetMark();
+                }
+                
             }
         }
         if(x>2){
-            if(((game[x][y].mark != game[x-1][y].mark)&&(game[x-1][y].mark != ""))&&((game[x-1][y].mark == game[x-2][y].mark))&&((game[x][y].mark == game[x-3][y].mark))){
+            if(((game[x][y].mark != game[x-1][y].mark)&&(game[x-1][y].mark != 0))&&((game[x-1][y].mark == game[x-2][y].mark))&&((game[x][y].mark == game[x-3][y].mark))){
                 turnScore +=2;
-                game[x-1][y].resetMark(internal);
-                game[x-2][y].resetMark(internal);
+                if (internal == true){
+                    game[x-1][y].mark = 0;
+                    game[x-2][y].mark = 0; 
+                } else {
+                    game[x-1][y].resetMark();
+                    game[x-2][y].resetMark();
+                }
             }
         }
         if(y<9){
-            if(((game[x][y].mark != game[x][y+1].mark)&&(game[x][y+1].mark != ""))&&((game[x][y+1].mark == game[x][y+2].mark))&&((game[x][y].mark == game[x][y+3].mark))){
+            if(((game[x][y].mark != game[x][y+1].mark)&&(game[x][y+1].mark != 0))&&((game[x][y+1].mark == game[x][y+2].mark))&&((game[x][y].mark == game[x][y+3].mark))){
                 turnScore +=2;
-                game[x][y+1].resetMark(internal);
-                game[x][y+2].resetMark(internal);
+                if (internal == true){
+                    game[x][y+1].mark = 0;
+                    game[x][y+2].mark = 0; 
+                } else {
+                    game[x][y+1].resetMark();
+                    game[x][y+2].resetMark();
+                }
             }
         }
         if(y>2){
-            if(((game[x][y].mark != game[x][y-1].mark)&&(game[x][y-1].mark != ""))&&((game[x][y-1].mark == game[x][y-2].mark))&&((game[x][y].mark == game[x][y-3].mark))){
+            if(((game[x][y].mark != game[x][y-1].mark)&&(game[x][y-1].mark != 0))&&((game[x][y-1].mark == game[x][y-2].mark))&&((game[x][y].mark == game[x][y-3].mark))){
                 turnScore +=2;
-                game[x][y-1].resetMark(internal);
-                game[x][y-2].resetMark(internal);
+                if (internal == true){
+                    game[x][y-1].mark = 0;
+                    game[x][y-2].mark = 0; 
+                } else {
+                    game[x][y-1].resetMark();
+                    game[x][y-2].resetMark();
+                }
             }
         }
         if((x<9)&&(y<9)){
-            if(((game[x][y].mark != game[x+1][y+1].mark)&&(game[x+1][y+1].mark != ""))&&((game[x+1][y+1].mark == game[x+2][y+2].mark))&&((game[x][y].mark == game[x+3][y+3].mark))){
+            if(((game[x][y].mark != game[x+1][y+1].mark)&&(game[x+1][y+1].mark != 0))&&((game[x+1][y+1].mark == game[x+2][y+2].mark))&&((game[x][y].mark == game[x+3][y+3].mark))){
                 turnScore +=2;
-                game[x+1][y+1].resetMark(internal);
-                game[x+2][y+2].resetMark(internal);
+                if (internal == true){
+                    game[x+1][y+1].mark = 0;
+                    game[x+2][y+2].mark = 0; 
+                } else {
+                    game[x+1][y+1].resetMark();
+                    game[x+2][y+2].resetMark();
+                }
             }
         }
         if((x>2)&&(y>2)){
-            if(((game[x][y].mark != game[x-1][y-1].mark)&&(game[x-1][y-1].mark != ""))&&((game[x-1][y-1].mark == game[x-2][y-2].mark))&&((game[x][y].mark == game[x-3][y-3].mark))){
+            if(((game[x][y].mark != game[x-1][y-1].mark)&&(game[x-1][y-1].mark != 0))&&((game[x-1][y-1].mark == game[x-2][y-2].mark))&&((game[x][y].mark == game[x-3][y-3].mark))){
                 turnScore +=2;
-                game[x-1][y-1].resetMark(internal);
-                game[x-2][y-2].resetMark(internal);
+                if (internal == true){
+                    game[x-1][y-1].mark = 0;
+                    game[x-2][y-2].mark = 0; 
+                } else {
+                    game[x-1][y-1].resetMark();
+                    game[x-2][y-2].resetMark();
+                }
             }
         }
         if((x>2)&&(y<9)){
-            if(((game[x][y].mark != game[x-1][y+1].mark)&&(game[x-1][y+1].mark != ""))&&((game[x-1][y+1].mark == game[x-2][y+2].mark))&&((game[x][y].mark == game[x-3][y+3].mark))){
+            if(((game[x][y].mark != game[x-1][y+1].mark)&&(game[x-1][y+1].mark != 0))&&((game[x-1][y+1].mark == game[x-2][y+2].mark))&&((game[x][y].mark == game[x-3][y+3].mark))){
                 turnScore +=2;
-                game[x-1][y+1].resetMark(internal);
-                game[x-2][y+2].resetMark(internal);
+                if (internal == true){
+                    game[x-1][y+1].mark = 0;
+                    game[x-2][y+2].mark = 0; 
+                } else {
+                    game[x-1][y+1].resetMark();
+                    game[x-2][y+2].resetMark();
+                }
             }
         }
         if((x<9)&&(y>2)){
-            if(((game[x][y].mark != game[x+1][y-1].mark)&&(game[x+1][y-1].mark != ""))&&((game[x+1][y-1].mark == game[x+2][y-2].mark))&&((game[x][y].mark == game[x+3][y-3].mark))){
+            if(((game[x][y].mark != game[x+1][y-1].mark)&&(game[x+1][y-1].mark != 0))&&((game[x+1][y-1].mark == game[x+2][y-2].mark))&&((game[x][y].mark == game[x+3][y-3].mark))){
                 turnScore +=2;
-                game[x+1][y-1].resetMark(internal);
-                game[x+2][y-2].resetMark(internal);
+                if (internal == true){
+                    game[x+1][y-1].mark = 0;
+                    game[x+2][y-2].mark = 0; 
+                } else {
+                    game[x+1][y-1].resetMark();
+                    game[x+2][y-2].resetMark();
+                }
             }
         }
 
