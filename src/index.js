@@ -91,8 +91,6 @@ const sabaGame = (()=>{
                     this.mark = players[currentPlayer].mark;
                     let check = checkWinner(game,this.x,this.y,false);
                     render(this);
-                    let nextmoves = (nextPossiblemoves(game,[],[]))
-                    console.log(nextmoves);
                     if (currentPlayer == 0){
                         players[0].plusScore(check.score)
                         player1score.innerText = `Score: ${players[0].score}`;
@@ -107,7 +105,8 @@ const sabaGame = (()=>{
                             }
                         }
                         if ((gameType == "ai") && (check.reset == false)){
-                            let index = miniMax(game,0,true,this.x,this.y,-Infinity,Infinity);
+                            var gameCopy = JSON.parse(JSON.stringify(game));
+                            let index = miniMax(gameCopy,0,true,this.x,this.y,-Infinity,Infinity);
                             game[index.x][index.y].mark = players[1].mark;
                             let internalCheck = checkWinner(game,index.x,index.y,false);
                             players[1].plusScore(internalCheck.score);
@@ -201,23 +200,27 @@ const sabaGame = (()=>{
 
     //miniMax algorithm function for ai play
     
-    function miniMax (gameTemp,depth,isMaximizer,x,y,alfa,beta){
+    function miniMax (gameCopy,depth,isMaximizer,x,y,alfa,beta){
         //var gameCopy = _.cloneDeep(gameTemp);
-        var gameCopy = JSON.parse(JSON.stringify(gameTemp));
         let check = checkWinner(gameCopy,x,y,true);
         let nextmoves = (nextPossiblemoves(gameCopy,[],[])).moves;
         let valueAi;
         let valueHuman;
         let bestX;
         let bestY;
-        if (check.reset == true||depth==2){
+        if (check.reset == true||depth==4){
             if(isMaximizer==false){
-                return {scoreAi: check.score, scoreHuman: 0, x: x, y: y};
+                return {scoreAi: check.score, scoreHuman: 0, x: x, y: y, erased: check.erased};
             }
             if(isMaximizer==true){
-                return {scoreAi: 0, scoreHuman: check.score, x: x, y: y};
+                return {scoreAi: 0, scoreHuman: check.score, x: x, y: y, erased: check.erased};
             }
         }
+        if (depth == 0){
+            console.log("Call")
+         }
+        
+        
     //next possible moves evaluator for AI player
 
         if (isMaximizer == true){
@@ -230,27 +233,32 @@ const sabaGame = (()=>{
                 if (gameCopy[nextmoves[i].x][nextmoves[i].y].mark == 0){
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 2;
                     let move = miniMax(gameCopy, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
-                    //gameCopy = _.cloneDeep(gameTemp);
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 0;
+                    if (depth !=0){
+                        if (move.erased.length > 1){
+                            for (let k = 0; k < check.erased.length; k++){
+                                    gameCopy[move.erased[k].x][move.erased[k].y].mark = 1
+                                    console.log(gameCopy,move.erased);
+                            }
+                        }
+                    }
                     if  ((move.scoreAi >= valueAi)&&(move.scoreHuman <= valueHuman)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
                         valueAi = move.scoreAi;
                         valueHuman = move.scoreHuman;
                         alfa = move.scoreAi
-                        if (depth == 0){
-                            console.log({scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY})
-                        }
-                        if(alfa>beta){
-                            break;
-                        }
+                        //if(alfa>beta){
+                          //  break;
+                        //}
                     }   
                 }
             }
             if (depth == 0){
-                return({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY });
+                //console.log(("Best move:",{scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY ,erased: check.erased}));
+                return({scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY, erased: check.erased });
             }else {
-                return ({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY});
+                return ({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY,erased: check.erased});
             }
             
         }
@@ -270,19 +278,25 @@ const sabaGame = (()=>{
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 1;
                     let move = miniMax(gameCopy, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     gameCopy[nextmoves[i].x][nextmoves[i].y].mark = 0;
+                    if (move.erased.length > 1){
+                        for (let k = 0; k < move.erased.length; k++){
+                            gameCopy[move.erased[k].x][move.erased[k].y].mark = 2;
+                        }
+                    }                    
                     if  ((move.scoreHuman >= valueHuman)&&(move.scoreAi <= valueAi)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y
                         valueAi = move.scoreAi;
                         valueHuman = move.scoreHuman;
                         beta = move.scoreHuman;
-                        if (beta>alfa){
-                            break;
-                        }
+                        //if (beta>alfa){
+                          //  break;
+                       // }
+                       console.log(("Best move:",{scoreAi: valueAi, scoreHuman: valueHuman, x: bestX, y: bestY ,erased: check.erased}))
                     } 
                 }
             }
-            return {scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY};
+            return {scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY, erased: check.erased};
         }  
     }
 
@@ -290,6 +304,7 @@ const sabaGame = (()=>{
 
         let turnScore = 0;
         let reset = false;
+        let erased = [];
         
         //checks for 4 in a row
 
@@ -382,7 +397,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x+1][y].mark = 0;
-                    game[x+2][y].mark = 0; 
+                    game[x+2][y].mark = 0;
+                    erased.push({x: game[x+1][y].x , y: game[x+1][y].y});
+                    erased.push({x: game[x+2][y].x , y: game[x+2][y].y});
                 } else {
                     game[x+1][y].resetMark();
                     game[x+2][y].resetMark();
@@ -395,7 +412,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x-1][y].mark = 0;
-                    game[x-2][y].mark = 0; 
+                    game[x-2][y].mark = 0;
+                    erased.push({x: game[x-1][y].x , y: game[x-1][y].y});
+                    erased.push({x: game[x-2][y].x , y: game[x-2][y].y});
                 } else {
                     game[x-1][y].resetMark();
                     game[x-2][y].resetMark();
@@ -407,7 +426,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x][y+1].mark = 0;
-                    game[x][y+2].mark = 0; 
+                    game[x][y+2].mark = 0;
+                    erased.push({x: game[x][y+1].x , y: game[x][y+1].y});
+                    erased.push({x: game[x][y+2].x , y: game[x][y+2].y});
                 } else {
                     game[x][y+1].resetMark();
                     game[x][y+2].resetMark();
@@ -419,7 +440,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x][y-1].mark = 0;
-                    game[x][y-2].mark = 0; 
+                    game[x][y-2].mark = 0;
+                    erased.push({x: game[x][y-1].x , y: game[x][y-1].y});
+                    erased.push({x: game[x][y-2].x , y: game[x][y-2].y});
                 } else {
                     game[x][y-1].resetMark();
                     game[x][y-2].resetMark();
@@ -431,7 +454,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x+1][y+1].mark = 0;
-                    game[x+2][y+2].mark = 0; 
+                    game[x+2][y+2].mark = 0;
+                    erased.push({x: game[x+1][y+1].x , y: game[x+1][y+1].y});
+                    erased.push({x: game[x+2][y+2].x , y: game[x+2][y+2].y});
                 } else {
                     game[x+1][y+1].resetMark();
                     game[x+2][y+2].resetMark();
@@ -443,7 +468,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x-1][y-1].mark = 0;
-                    game[x-2][y-2].mark = 0; 
+                    game[x-2][y-2].mark = 0;
+                    erased.push({x: game[x-1][y-1].x , y: game[x-1][y-1].y});
+                    erased.push({x: game[x-2][y-2].x , y: game[x-2][y-2].y});
                 } else {
                     game[x-1][y-1].resetMark();
                     game[x-2][y-2].resetMark();
@@ -455,7 +482,9 @@ const sabaGame = (()=>{
                 turnScore +=2;
                 if (internal == true){
                     game[x-1][y+1].mark = 0;
-                    game[x-2][y+2].mark = 0; 
+                    game[x-2][y+2].mark = 0;
+                    erased.push({x: game[x-1][y+1].x , y: game[x-1][y+1].y});
+                    erased.push({x: game[x-2][y+2].x , y: game[x-2][y+2].y});
                 } else {
                     game[x-1][y+1].resetMark();
                     game[x-2][y+2].resetMark();
@@ -468,6 +497,8 @@ const sabaGame = (()=>{
                 if (internal == true){
                     game[x+1][y-1].mark = 0;
                     game[x+2][y-2].mark = 0; 
+                    erased.push({x: game[x+1][y-1].x , y: game[x+1][y-1].y});
+                    erased.push({x: game[x+2][y-2].x , y: game[x+2][y-2].y});
                 } else {
                     game[x+1][y-1].resetMark();
                     game[x+2][y-2].resetMark();
@@ -600,7 +631,9 @@ const sabaGame = (()=>{
                 reset = true;
             }
         }
+
         return {
+            erased,
             reset,
             score: turnScore,
         };
@@ -631,7 +664,6 @@ const sabaGame = (()=>{
             roundStartPlayer = 0;
         }
         board.innerHTML = "";
-        console.log(roundStartPlayer);
         populateBoard ();
         currentPlayer = roundStartPlayer;
         if(currentPlayer == 1){
