@@ -205,16 +205,15 @@ const sabaGame = (()=>{
     function miniMax (gameTemp,depth,isMaximizer,x,y,alfa,beta){
         let check = checkWinner(gameTemp,x,y,true);
         let nextmoves = (nextPossiblemoves(gameTemp,[],[])).moves;
-        let valueAi;
-        let valueHuman;
         let bestX;
         let bestY;
+        let value;
         if (check.reset == true||depth==4){
             if(isMaximizer==false){
-                return {scoreAi: check.score, scoreHuman: 0, x: x, y: y,erased: check.erased};
+                return {score: check.score, x: x, y: y,erased: check.erased}; 
             }
             if(isMaximizer==true){
-                return {scoreAi: 0, scoreHuman: check.score, x: x, y: y,erased: check.erased};
+                return {score: -check.score, x: x, y: y,erased: check.erased};
             }
         }
         if (depth == 0){
@@ -223,75 +222,62 @@ const sabaGame = (()=>{
     //next possible moves evaluator for AI player
 
         if (isMaximizer == true){
-            if (depth != 0){
-                beta += check.score;
-            }
-            valueAi = -Infinity;
-            valueHuman = Infinity;
+            value = -Infinity;
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameTemp[nextmoves[i].x][nextmoves[i].y].mark == 0){
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 2;
                     let move = miniMax(gameTemp, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 0;
-                    if  ((move.scoreAi >= valueAi)&&(move.scoreHuman <= check.score + valueHuman)){
+                    if (((+move.score-+check.score) >= value)){
                         bestX = nextmoves[i].x;
-                        bestY = nextmoves[i].y
-                        valueAi = move.scoreAi;
-                        valueHuman = move.scoreHuman;
-                        alfa = move.scoreAi;
-                        //if(alfa>beta){
-                          //  break;
-                        //}
+                        bestY = nextmoves[i].y;
+                        value = (+move.score - +check.score); 
                     }
+                    if ((+move.score-+check.score)>= alfa){
+                        alfa = move.score - check.score;
+                    } 
                     if (move.erased.length > 0){
                         for (let k = 0; k < move.erased.length; k++){
                                 gameTemp[move.erased[k].x][move.erased[k].y].mark = 1;
                         }
                     }
-                    if (depth == 0){    
-                        console.log({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY,erased: check.erased})
+                    if(beta<alfa){
+                        break;
                     }
                 }
             }
-            if (depth == 0){    
-                console.log("bestMove:",{scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY,erased: check.erased})
-            }
-            return ({scoreAi: valueAi, scoreHuman: check.score + valueHuman, x: bestX, y: bestY,erased: check.erased});    
+            return ({score: value, x: bestX, y: bestY,erased: check.erased});    
         }
 
         
     //next possible moves evaluator for human player
 
         if(isMaximizer == false){
-            alfa += check.score;
-            if (depth == 1){
-               beta = 0;
-            }
-            valueAi = Infinity;
-            valueHuman = -Infinity;
+            value = Infinity;
             for (let i = 0; i < nextmoves.length; i++){
                 if (gameTemp[nextmoves[i].x][nextmoves[i].y].mark == 0){
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 1;
                     let move = miniMax(gameTemp, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta,);
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 0;
-                    if  ((move.scoreHuman >= valueHuman)&&(move.scoreAi <= check.score + valueAi)){
+                    if  (((move.score + check.score) <= value)){
                         bestX = nextmoves[i].x;
-                        bestY = nextmoves[i].y
-                        valueAi = move.scoreAi;
-                        valueHuman = move.scoreHuman;
-                        beta = move.scoreHuman;
-                        //if (beta>alfa){
-                          //  break;
-                        //}
-                    } 
+                        bestY = nextmoves[i].y;
+                        value = (move.score + check.score);
+                    }
+                    if((move.score + check.score) <= beta){
+                        beta = move.score + check.score;
+                    }
                     if (move.erased.length > 0){
                         for (let k = 0; k < move.erased.length; k++){
-                                gameTemp[move.erased[k].x][move.erased[k].y].mark = 2;
+                            gameTemp[move.erased[k].x][move.erased[k].y].mark = 2;
                         }
                     }
+                    if(beta<alfa){
+                        break;
+                    }     
                 }
             }
-            return {scoreAi: check.score + valueAi, scoreHuman: valueHuman, x: bestX, y: bestY,erased: check.erased};
+            return {score: value, x: bestX, y: bestY,erased: check.erased};
         }  
     }
 
