@@ -97,7 +97,8 @@ const sabaGame = (()=>{
                         currentPlayer = 1;
                         if (check.reset == true){
                             resetGame();
-                            if ((currentPlayer == 1)&&(gameType= "ai")){
+                            if ((currentPlayer == 1)&&(gameType == "ai")){
+                                console.log("1")
                                 game[6][6].mark = players[1].mark;
                                 render(game[6][6]);
                                 currentPlayer = 0;
@@ -118,6 +119,7 @@ const sabaGame = (()=>{
                                 resetGame();
                                 if (currentPlayer == 1){
                                     game[6][6].mark = players[1].mark;
+                                    console.log("2")
                                     render(game[6][6]);
                                     currentPlayer = 0;
                                     board.className = `player1turn`;
@@ -210,9 +212,19 @@ const sabaGame = (()=>{
         let value;
         if (check.reset == true||depth==4){
             if(isMaximizer==false){
+                if(check.erased.length > 0){
+                    for (let k = 0; k < check.erased.length; k++){
+                        gameTemp[check.erased[k].x][check.erased[k].y].mark = 2;
+                    }
+                }
                 return {score: check.score, x: x, y: y,erased: check.erased}; 
             }
             if(isMaximizer==true){
+                if(check.erased.length > 0){
+                    for (let k = 0; k < check.erased.length; k++){
+                        gameTemp[check.erased[k].x][check.erased[k].y].mark = 1;
+                    }
+                }
                 return {score: -check.score, x: x, y: y,erased: check.erased};
             }
         }
@@ -228,7 +240,7 @@ const sabaGame = (()=>{
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 2;
                     let move = miniMax(gameTemp, depth +1, false,nextmoves[i].x,nextmoves[i].y,alfa,beta);
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 0;
-                    if (((+move.score-+check.score) >= value)){
+                    if (((+move.score-+check.score) > value)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y;
                         value = (+move.score - +check.score); 
@@ -259,7 +271,7 @@ const sabaGame = (()=>{
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 1;
                     let move = miniMax(gameTemp, depth +1, true,nextmoves[i].x,nextmoves[i].y,alfa,beta,);
                     gameTemp[nextmoves[i].x][nextmoves[i].y].mark = 0;
-                    if  (((move.score + check.score) <= value)){
+                    if(((move.score + check.score) < value)){
                         bestX = nextmoves[i].x;
                         bestY = nextmoves[i].y;
                         value = (move.score + check.score);
@@ -267,7 +279,7 @@ const sabaGame = (()=>{
                     if((move.score + check.score) <= beta){
                         beta = move.score + check.score;
                     }
-                    if (move.erased.length > 0){
+                    if(move.erased.length > 0){
                         for (let k = 0; k < move.erased.length; k++){
                             gameTemp[move.erased[k].x][move.erased[k].y].mark = 2;
                         }
