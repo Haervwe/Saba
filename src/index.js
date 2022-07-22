@@ -210,7 +210,7 @@ const sabaGame = (()=>{
         let bestX;
         let bestY;
         let value;
-        if (check.reset == true||depth==4){
+        if (check.reset == true||depth==5){
             if(isMaximizer==false){
                 if(check.erased.length > 0){
                     for (let k = 0; k < check.erased.length; k++){
